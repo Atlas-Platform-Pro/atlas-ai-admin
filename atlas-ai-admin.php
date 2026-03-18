@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Atlas AI Admin
- * Plugin URI:  https://github.com/ATPlatformPro/atlas-ai-admin
+ * Plugin URI:  https://github.com/Atlas-Platform-Pro/atlas-ai-admin
  * Description: Admin panel for managing Atlas AI system instructions via n8n CRUD API.
  * Version:     1.0.0
  * Author:      Atlas Platform
@@ -149,7 +149,7 @@ class Atlas_AI_GitHub_Updater {
 // Initialize updater — change repo if needed
 new Atlas_AI_GitHub_Updater(
     ATLAS_AI_ADMIN_FILE,
-    'ATPlatformPro/atlas-ai-admin' // GitHub: owner/repo
+    'Atlas-Platform-Pro/atlas-ai-admin' // GitHub: owner/repo
 );
 
 // ============================================
