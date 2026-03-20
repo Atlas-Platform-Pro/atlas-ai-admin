@@ -3,7 +3,7 @@
  * Plugin Name: Atlas AI Admin
  * Plugin URI:  https://github.com/Atlas-Platform-Pro/atlas-ai-admin
  * Description: Admin panel for managing Atlas AI system instructions via n8n CRUD API.
- * Version:     1.0.0
+ * Version:     1.1.0
  * Author:      Atlas Platform
  * Author URI:  https://atlas-platform.pro
  * License:     GPL-2.0+
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('ATLAS_AI_ADMIN_VERSION', '1.0.0');
+define('ATLAS_AI_ADMIN_VERSION', '1.1.0');
 define('ATLAS_AI_ADMIN_FILE', __FILE__);
 
 // ============================================
@@ -153,7 +153,13 @@ new Atlas_AI_GitHub_Updater(
 );
 
 // ============================================
-// 2. Configuration
+// 2. Chat Shortcode
+// ============================================
+
+require_once plugin_dir_path(__FILE__) . 'includes/chat-shortcode.php';
+
+// ============================================
+// Configuration
 // ============================================
 
 if (!defined('ATLAS_INSTR_ENDPOINT')) {
