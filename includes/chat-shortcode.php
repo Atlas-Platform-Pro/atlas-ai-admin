@@ -42,11 +42,12 @@ function atlas_chat_handler() {
         wp_send_json_error(array('message' => 'No message provided.'), 400);
     }
 
-    // Rate limiting: 3 responses per session per hour
+    // Rate limiting: 3 responses per session per hour (skip for admins)
+    $is_admin = current_user_can('manage_options');
     $rl_key = 'atlas_chat_rl_' . md5($ip . '_' . $session_id);
     $count  = get_transient($rl_key);
 
-    if ($count !== false && (int) $count >= 3) {
+    if (!$is_admin && $count !== false && (int) $count >= 3) {
         wp_send_json_error(array(
             'message'   => 'limit_reached',
             'remaining' => 0,
@@ -75,11 +76,15 @@ function atlas_chat_handler() {
         wp_send_json_error(array('message' => $body['message'] ?? 'Backend error.'), $code);
     }
 
-    // Increment counter only on successful response
-    $new_count = ($count === false) ? 1 : (int) $count + 1;
-    set_transient($rl_key, $new_count, HOUR_IN_SECONDS);
+    // Increment counter only on successful response (skip for admins)
+    if (!$is_admin) {
+        $new_count = ($count === false) ? 1 : (int) $count + 1;
+        set_transient($rl_key, $new_count, HOUR_IN_SECONDS);
+        $body['remaining'] = 3 - $new_count;
+    } else {
+        $body['remaining'] = -1; // unlimited
+    }
 
-    $body['remaining'] = 3 - $new_count;
     wp_send_json_success($body);
 }
 
