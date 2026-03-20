@@ -1,6 +1,6 @@
 <?php
 /**
- * Atlas AI Chat — Shortcode & AJAX handler
+ * Atlas Explorer Chat — Shortcode & AJAX handler
  * Shortcode: [atlas_chat]
  *
  * Attributes:
@@ -112,7 +112,7 @@ function atlas_chat_shortcode($atts) {
     ob_start();
     ?>
 
-<!-- Atlas AI Chat v<?php echo esc_html(ATLAS_AI_ADMIN_VERSION); ?> -->
+<!-- Atlas Explorer Chat v<?php echo esc_html(ATLAS_AI_ADMIN_VERSION); ?> -->
 <style>
 /* ── Atlas Chat — Claude palette ── */
 .ac-wrap {
@@ -667,7 +667,7 @@ function atlas_chat_shortcode($atts) {
                 </svg>
             </div>
             <div class="ac-header-info">
-                <span class="ac-header-title">Atlas AI</span>
+                <span class="ac-header-title">Atlas Explorer</span>
                 <span class="ac-header-sub">Powered by Claude</span>
             </div>
         </div>
@@ -829,16 +829,20 @@ function atlas_chat_shortcode($atts) {
             typingEl.remove();
 
             if (data.success && data.data) {
-                var reply = data.data.response || data.data.output || '';
+                var d = data.data;
+                // Handle array-wrapped responses from n8n
+                if (Array.isArray(d)) d = d[0] || {};
+                var reply = d.response || d.output || d.text || '';
                 if (reply) {
                     addMessage(reply, false);
                 } else {
-                    addError('Nem erkezett valasz.');
+                    console.log('Atlas Explorer: empty response, full data:', JSON.stringify(data));
+                    addError('Oops! The AI seems to be on a coffee break. Try again in a moment.');
                 }
 
                 // Update remaining
-                if (typeof data.data.remaining === 'number') {
-                    remaining = data.data.remaining;
+                if (typeof d.remaining === 'number' && d.remaining >= 0) {
+                    remaining = d.remaining;
                 } else {
                     remaining = Math.max(0, remaining - 1);
                 }
@@ -849,21 +853,21 @@ function atlas_chat_shortcode($atts) {
                     showLimitOverlay();
                 }
             } else {
-                var msg = (data.data && data.data.message) || 'Hiba tortent.';
+                var msg = (data.data && data.data.message) || '';
                 if (msg === 'limit_reached') {
                     remaining = 0;
                     saveCount();
                     updateRemaining();
                     showLimitOverlay();
                 } else {
-                    addError(msg);
+                    addError('Well, that didn\'t work. Even AIs have bad days. ' + (msg ? '(' + msg + ')' : ''));
                 }
             }
         })
         .catch(function(err) {
             typingEl.remove();
-            addError('Kapcsolodasi hiba. Probald ujra.');
-            console.error('Atlas Chat:', err);
+            addError('Houston, we have a connection problem. Check your internet and try again.');
+            console.error('Atlas Explorer:', err);
         })
         .finally(function() {
             isSending = false;
@@ -936,9 +940,9 @@ function atlas_chat_shortcode($atts) {
         ol.innerHTML =
             '<div class="ac-limit-box">' +
                 '<div class="ac-limit-icon"><svg viewBox="0 0 24 24"><path d="M12 8v4M12 16h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></div>' +
-                '<div class="ac-limit-title">Elerted a proba limitet</div>' +
-                '<div class="ac-limit-text">Egy ora mulva ujra hasznalhatod, vagy jelentkezz be az Atlas platformon a korlatlan hozzaferesert.</div>' +
-                '<a href="https://app.atlas-platform.pro" class="ac-limit-btn" target="_blank">Bejelentkezes</a>' +
+                '<div class="ac-limit-title">You\'ve reached the free limit</div>' +
+                '<div class="ac-limit-text">Come back in an hour for 3 more questions, or sign in to Atlas for unlimited access.</div>' +
+                '<a href="https://app.atlas-platform.pro" class="ac-limit-btn" target="_blank">Sign in to Atlas</a>' +
             '</div>';
         wrap.appendChild(ol);
     }

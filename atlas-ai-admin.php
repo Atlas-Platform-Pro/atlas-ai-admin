@@ -3,7 +3,7 @@
  * Plugin Name: Atlas AI Admin
  * Plugin URI:  https://github.com/Atlas-Platform-Pro/atlas-ai-admin
  * Description: Admin panel for managing Atlas AI system instructions via n8n CRUD API.
- * Version:     1.2.0
+ * Version:     1.3.0
  * Author:      Atlas Platform
  * Author URI:  https://atlas-platform.pro
  * License:     GPL-2.0+
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('ATLAS_AI_ADMIN_VERSION', '1.2.0');
+define('ATLAS_AI_ADMIN_VERSION', '1.3.0');
 define('ATLAS_AI_ADMIN_FILE', __FILE__);
 
 // ============================================
@@ -846,7 +846,7 @@ function atlas_ai_admin_page() {
                     '<div class="ai-chat-header">' +
                         '<div class="ai-chat-header-left">' +
                             '<div class="ai-chat-logo">' + AI_ICON + '</div>' +
-                            '<div><div class="ai-chat-htitle">Chat teszt</div>' +
+                            '<div><div class="ai-chat-htitle">Atlas Explorer</div>' +
                             '<div class="ai-chat-hsub">' + esc(instrSet) + ' v' + esc(version) + '</div></div>' +
                         '</div>' +
                         '<div style="display:flex;align-items:center;gap:8px;">' +
@@ -857,7 +857,7 @@ function atlas_ai_admin_page() {
                     '<div class="ai-chat-messages" id="aiChatMsgs">' +
                         '<div class="ai-chat-msg ai-chat-msg-assistant">' +
                             '<div class="ai-chat-av ai-chat-av-ai">' + AI_ICON + '</div>' +
-                            '<div class="ai-chat-bub">Szia! Chat teszt mód — ' + esc(instrSet) + ' v' + esc(version) + '</div>' +
+                            '<div class="ai-chat-bub">Szia! Atlas Explorer mód — ' + esc(instrSet) + ' v' + esc(version) + '</div>' +
                         '</div>' +
                     '</div>' +
                     '<div class="ai-chat-input-area">' +
@@ -930,14 +930,23 @@ function atlas_ai_admin_page() {
                 .then(function(data) {
                     typingEl.remove();
                     if (data.success && data.data) {
-                        var reply = data.data.response || data.data.output || '';
+                        var d = data.data;
+                        // Handle array-wrapped responses from n8n
+                        if (Array.isArray(d)) d = d[0] || {};
+                        var reply = d.response || d.output || d.text || '';
                         if (reply) {
                             chatAddMsg(reply, false);
                         } else {
-                            chatAddErr('Nem erkezett valasz.');
+                            console.log('Atlas Explorer: empty response, full data:', JSON.stringify(data));
+                            chatAddErr('Oops! The AI seems to be on a coffee break. Try again in a moment.');
                         }
                     } else {
-                        chatAddErr((data.data && data.data.message) || 'Hiba tortent.');
+                        var errMsg = (data.data && data.data.message) || '';
+                        if (errMsg === 'limit_reached') {
+                            chatAddErr('You\'ve used up your questions. Close and reopen to start fresh!');
+                        } else {
+                            chatAddErr('Well, that didn\'t work. Even AIs have bad days. (' + (errMsg || 'unknown error') + ')');
+                        }
                     }
 
                     // Client-side counter (server skips limit for admins)
@@ -947,7 +956,7 @@ function atlas_ai_admin_page() {
                     if (chatState.remaining <= 0) {
                         var limitDiv = document.createElement('div');
                         limitDiv.className = 'ai-chat-limit';
-                        limitDiv.innerHTML = '<strong>3 kerdes limit elerte.</strong><br>Zard be es nyisd ujra a chat tesztet az ujrakezdéshez.';
+                        limitDiv.innerHTML = '<strong>That\'s a wrap!</strong><br>3 questions used. Close and reopen to start a fresh session.';
                         msgsEl.appendChild(limitDiv);
                         inputEl.disabled = true;
                         msgsEl.scrollTop = msgsEl.scrollHeight;
@@ -955,7 +964,8 @@ function atlas_ai_admin_page() {
                 })
                 .catch(function(err) {
                     typingEl.remove();
-                    chatAddErr('Kapcsolodasi hiba.');
+                    chatAddErr('Houston, we have a connection problem. Check your internet and try again.');
+                    console.error('Atlas Explorer:', err);
                 })
                 .finally(function() {
                     chatState.sending = false;
